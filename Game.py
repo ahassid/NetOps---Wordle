@@ -1,76 +1,76 @@
-import Printer
+from Printer import Printer
 
 class Game:
     
-    @staticmethod
-    def compare(str_a, str_b):
-        y = 0
-        Answer = ""
-        for g in str_a:
-            x = 0
-            flag = False
-            flag2 = False
-            for e in str_b:
-                if g == e or abs(ord(g) - ord(e)) == 32:
-                    flag = True
-                    if x == y:
-                        flag2 = True
-                        Answer += "T"
-                        break
-                        
-                x+=1
-            if flag == False:
-                Answer += "F"
-            elif flag2 == False:
-                Answer += "P"
-            y+=1   
-    
-        return Answer
+    def __init__(self, wordsDBName):
+        self.p = Printer()
+        self.arrayOfWords = []
+        wordsDB = open(wordsDBName, "r")
+        for f in wordsDB:
+            f = f.removesuffix('\n')
+            if self.Validate(f):
+                self.arrayOfWords.append(f)
 
-    @staticmethod
-    def compareV2(str_a, str_b):
+    def Compare(self, str_a, str_b):
         
-        AlphaBetaArr =  [False for i in range(26)]
+        isLetterExistsArr =  [False for i in range(26)]
+        howManyTimeLetterExistsArr =  [0 for i in range(26)]
+       
         for i in str_b:
-            AlphaBetaArr[ord(i) - ord('a')] = True
-        y = 0
-        Answer = ""
-        for g in str_a:
-            if(AlphaBetaArr[ord(g)-ord('a')]):
-                if(g == str_b[y]):
-                    Answer += "T"
-                else:
-                    Answer += "P"
-            else:
-                Answer += "F"
-            y+=1   
-    
-        return Answer
+            isLetterExistsArr[ord(i) - ord('a')] = True
+            howManyTimeLetterExistsArr[ord(i) - ord('a')] += 1
 
-    @staticmethod
-    def Validate(str_a):
-        if len(str_a) != 5 or str_a.isalpha() != True:
-            return False
-        return True    
-    
-    def startGame(MJ, realWord, color):
+        y = 0
+        answer = [' ' for i in range(len(str_a))]
+        for g in str_a:
+            if(isLetterExistsArr[ord(g)-ord('a')]):
+                if(g == str_b[y]):
+                    answer[y] = "T"
+                    howManyTimeLetterExistsArr[ord(g) - ord('a')] -= 1
+            y+=1
+        y = 0    
+        for g in str_a:
+            if(answer[y] != "T"):
+                if(isLetterExistsArr[ord(g)-ord('a')] and howManyTimeLetterExistsArr[ord(g)-ord('a')] > 0):
+                    answer[y] = "P"
+                    howManyTimeLetterExistsArr[ord(g) - ord('a')] -= 1
+                else:    
+                    answer[y] = "F"
+            y+=1   
         
+        answer = ''.join([str(elem) for elem in answer])
+        return answer
+
+    def Validate(self, str_a):
+        if len(str_a) != 5 or not str_a.isalpha() or not str_a.isascii():
+            return False
+        return True  
+
+    def StartGame(self, realWord, color):
+    
+        resultsFile = open("Results.txt", "a")
+        amountOfGames += 1
         i = 0
         while i < 5:
-            
-            Guess = input("Enter your guess: ")
-            check = MJ.Validate(Guess)
-            if check == True:
+            guess = input("Enter your guess: ").lower()
+            checkGuess = self.Validate(guess)
+            if checkGuess == True:
                 i += 1
-                NewAnswer = MJ.compareV2(Guess, realWord)
-                Printer.S_Print (Guess, NewAnswer, color)
-                if NewAnswer == "TTTTT":
+                newAnswer = self.Compare(guess, realWord)
+                self.p.ColourfulPrint(guess, newAnswer, color)
+                if newAnswer == "TTTTT":
+                    #resultsFile.write("Well Done - You Completed The Mission On Try Number " + str(i + 1) + "\n")
+                    resultsFile.write(str(i + 1) + "\n")
+                    resultsFile.close()
                     print ("Mission Accomplished! ")
-                    break
+                    break 
             else:
                 print ("There Was A Problem With Your Guess, It Doesn't Count - Please Try Again")
             
-        if i == 5:    
+        if newAnswer != "TTTTT":  
+            #resultsFile.write("Too Bad - You Failed, Maybe You Will Do Better Next Time\n")
+            resultsFile.write(str(0) + "\n")
+            resultsFile.close()
             print ("You Are A Loser !")
         
         while True:
@@ -80,4 +80,5 @@ class Game:
             except ValueError:
                     print("Sorry ! You Entered An Inappropriate Value ")
 
+       
          
